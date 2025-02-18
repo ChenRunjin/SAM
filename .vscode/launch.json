@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Python Debugger: Current File with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "${command:pickArgs}"
+            ]
+        },
+        {
+            "name": "main_pretrain",
+            "type": "debugpy",
+            "request": "launch",
+            "justMyCode": false,
+            "program": "main_pretrain.py",
+            "console": "integratedTerminal",
+            "env": {"CUDA_VISIBLE_DEVICES":"3"},
+            "args": "--model_config configs/llama_60m.json --eval_every 1000 --save_every 20000 --dtype bfloat16 --batch_size 64 --total_batch_size 64 --lr 0.01 --warmup_steps 6000 --num_training_steps 100000 --optimizer sam --weight_decay 0 --project SAM --name debug --save_dir checkpoints/debug --restore_optimizer --rho 0.05 --single_gpu --precond",
+            "pythonArgs": [
+                "-m", "torch.distributed.run",
+                "--nproc_per_node=1", 
+                "--standalone"
+            ]
+        },
+    ]
+}
