@@ -77,7 +77,7 @@ class SAM(torch.optim.Optimizer):
 
 class FunctionalSAM(torch.optim.Optimizer):
     def __init__(self, params, base_optimizer, rho=0.05, precond=False, **kwargs):
-        assert rho >= 0.0, "rho 必须非负"
+        assert rho >= 0.0, "rho must be positive"
         defaults = dict(rho=rho, precond=precond, **kwargs)
         super().__init__(params, defaults)
 
@@ -87,7 +87,7 @@ class FunctionalSAM(torch.optim.Optimizer):
 
     @torch.no_grad()
     def step(self, closure=None):
-        assert closure is not None, "FunctionalSAM 需要 closure 返回 (loss, logits)"
+        assert closure is not None, "FunctionalSAM need closure return (loss, logits)"
         closure = torch.enable_grad()(closure)
 
         clean_loss, clean_logits = closure()
@@ -99,21 +99,21 @@ class FunctionalSAM(torch.optim.Optimizer):
         perturbed_loss.backward(create_graph=True)
 
         dL_dlogits = torch.autograd.grad(
-            clean_loss,       # 干净 loss
-            clean_logits,     # 干净 logits
+            clean_loss,       
+            clean_logits,     
             retain_graph=True,
             allow_unused=True
         )[0]
 
         all_params = [p for group in self.param_groups for p in group["params"] if p.grad is not None]
         grads = torch.autograd.grad(
-            perturbed_logits,  # 扰动状态下的 logits
-            all_params,        # 针对每个参数求导
-            grad_outputs=dL_dlogits,  # 使用干净分支计算得到的 dL/dlogits
+            perturbed_logits, 
+            all_params,       
+            grad_outputs=dL_dlogits,  
             retain_graph=True
         )
 
-        # 7. 恢复原始参数（未扰动前的参数）
+  
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is None:
@@ -139,9 +139,7 @@ class FunctionalSAM(torch.optim.Optimizer):
             for p in group["params"]:
                 if p.grad is None:
                     continue
-                # 保存原始参数
                 self.state[p]["old_p"] = p.clone().detach()
-                # 计算扰动，并进行 in-place 更新
                 e_w = p.grad.detach() * scale.to(p.device)
                 if group["precond"] and "exp_avg_sq" in self.base_optimizer.state[p]:
                     beta2 = group["betas"][1]
