@@ -271,9 +271,9 @@ def train_sft(
                                 if param is not None and grad is not None:
                                     if param.grad is None:
                                         # param.grad = torch.zeros_like(param, device=model.device)
-                                        param.grad = grad.detach() / accumulated_steps
+                                        param.grad = grad.detach() 
                                     else:
-                                        param.grad = param.grad + grad.detach() / accumulated_steps
+                                        param.grad = param.grad + grad.detach() 
                             del name, grad
                         del vjp_grads
                         gc.collect()
