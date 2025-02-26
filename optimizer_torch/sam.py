@@ -112,14 +112,6 @@ class FunctionalSAM(torch.optim.Optimizer):
             grad_outputs=dL_dlogits,  
             retain_graph=True
         )
-
-  
-        for group in self.param_groups:
-            for p in group["params"]:
-                if p.grad is None:
-                    continue
-                p.data.copy_(self.state[p]["old_p"])
-
         idx = 0
         for group in self.param_groups:
             for p in group["params"]:
@@ -128,8 +120,9 @@ class FunctionalSAM(torch.optim.Optimizer):
                 p.grad = grads[idx]
                 idx += 1
 
-        self.base_optimizer.step()
-        self.zero_grad(set_to_none=True)
+  
+        self.final_step(grads)
+        
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):
@@ -148,6 +141,25 @@ class FunctionalSAM(torch.optim.Optimizer):
                 p.add_(e_w)
         if zero_grad:
             self.zero_grad(set_to_none=True)
+
+    def final_step(self, grads):
+        for group in self.param_groups:
+            for p in group["params"]:
+                if p.grad is None:
+                    continue
+                p.data.copy_(self.state[p]["old_p"])
+
+        # idx = 0
+        # for group in self.param_groups:
+        #     for p in group["params"]:
+        #         if p.grad is None:
+        #             continue
+        #         p.grad = grads[idx]
+        #         idx += 1
+
+        self.base_optimizer.step()
+        self.zero_grad(set_to_none=True)
+        
 
     def _grad_norm(self):
         shared_device = self.param_groups[0]["params"][0].device
